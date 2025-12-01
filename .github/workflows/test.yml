@@ -1,0 +1,45 @@
+# .github/workflows/test.yml
+name: Mini Pipeline Pengujian (Mock CI/CD)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Download ChromeDriver
+      run: |
+        wget https://chromedriver.storage.googleapis.com/126.0.6478.127/chromedriver_linux64.zip
+        unzip chromedriver_linux64.zip
+        chmod +x chromedriver
+        sudo mv chromedriver /usr/local/bin/
+
+    - name: Run tests with PyTest
+      run: |
+        pytest login_selenium.py --html=report.html --self-contained-html -v
+
+    - name: Save screenshots and report
+      run: |
+        ls -la
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Actions"
+        git add .
+        git commit -m "✅ Test result: $(date)" || echo "No changes to commit"
+        git push origin main
